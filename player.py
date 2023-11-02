@@ -15,4 +15,4 @@ class Player:
     def update(self):
         self.x = self.x + self.vx
         self.y = self.y + self.vy
-        
+    
