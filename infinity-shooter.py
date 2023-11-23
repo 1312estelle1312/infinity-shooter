@@ -1,6 +1,7 @@
 # Example file showing a basic pygame "game loop"
 # hey
 import pygame
+from world import World
 
 # pygame setup
 pygame.init()
@@ -11,7 +12,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 running = True
 
-
+world_1 = World(WIDTH, HEIGHT, screen)
 
 while running:
     # poll for events
@@ -21,6 +22,8 @@ while running:
             running = False
 
     screen.fill((0, 0, 0))
+
+    world_1.update()
 
     # flip() the display to put your work on screen
     pygame.display.flip()
