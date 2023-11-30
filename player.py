@@ -1,7 +1,7 @@
 import pygame 
 
 class Player:
-    def __innit__(self,x,y,vx,vy):
+    def __init__(self,x,y,vx,vy):
         self.x = x
         self.y = y
         self.vx = vx
@@ -10,7 +10,7 @@ class Player:
         self.alive = True
 
     def draw(self,screen):
-        pygame.draw.circle(screen, "red", self.x, self.y, self.radius)
+        pygame.draw.circle(screen, (255, 0, 0), self.x, self.y, self.radius)
 
     def update(self,pressed):
         if pressed[pygame.K_w]:

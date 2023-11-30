@@ -1,7 +1,7 @@
 import pygame 
 
 class Opponent:
-    def __innit__(self,x,y,vx,vy):
+    def __init__(self,x,y,vx,vy):
         self.x = x
         self.y = y
         self.vx = vx
