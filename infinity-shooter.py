@@ -8,16 +8,16 @@ from bullet import Bullet
 pygame.init()
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Space Invaders!")
+pygame.display.set_caption("Infitity-Shooter")
 clock = pygame.time.Clock()
 running = True
-aliens = []
-for _ in range(20):
-    x = random.randint(20, WIDTH-20)
-    y = random.randint (-200, -20)
+ops = []
+for _ in range(5):
+    x = random.randint()
+    y = random.randint ()
     vy = random.randint (2,4)
-    alien = Alien(x,y,vy)
-    aliens.append(alien)
+    opponent = Opponent(x,y,vy)
+    ops.append(opponent)
 bullets = []
 
 p = Player(WIDTH/2, HEIGHT - 100, 4, 4)
