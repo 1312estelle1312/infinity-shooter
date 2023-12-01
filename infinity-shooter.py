@@ -2,12 +2,13 @@
 # hey
 import pygame
 from world import World
+import constants
 
 # pygame setup
 pygame.init()
 
-WIDTH = 1280
-HEIGHT = 720
+WIDTH = constants.WIDTH
+HEIGHT = constants.HEIGHT
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 running = True
