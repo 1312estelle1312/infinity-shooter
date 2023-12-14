@@ -1,6 +1,7 @@
 import pygame 
 import random
 import constants
+from rects import Rects
 
 class World:
     def __init__(self, w, h, surface):
@@ -36,13 +37,16 @@ class World:
 
         #"scroll" the old screen
         for rect in self.current_elements:
-
+            if rect.shift >= constants.WIDTH * -1:
+                self.current_elements.remove(rect)
+            rect.gen_rect(self.s) 
 
         #generate the new screen
-
-        new_rect = self.gen_rect()
+        new_rect = Rects(self.surface)
+        new_rect.gen_rect(0)
 
         self.current_elements.append(new_rect)
+        print(self.current_elements)
 
         
 
