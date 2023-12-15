@@ -10,7 +10,7 @@ class Opponent:
         self.alive = True
 
     def draw(self,screen):
-        pygame.draw.circle(screen, "red", self.x, self.y, self.radius)
+        pygame.draw.circle(screen, "red", (self.x, self.y), self.radius)
     
     def update(self):
         self.x = self.x + self.vx
