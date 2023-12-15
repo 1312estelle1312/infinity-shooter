@@ -24,7 +24,7 @@ world_1 = World(WIDTH, HEIGHT, screen)
 
 #Liste für Gegner
 ops = []
-for _ in range(5):
+for _ in range(10):
     x = random.randint(426, 853)
     y = random.randint (240, 480)
     vx = random.randint (-1, 0)
@@ -47,7 +47,9 @@ def collides(o,b):
         return True
     else:
         return False
-c = Coin(x,y)
+c = Coin(WIDTH/1.5, HEIGHT/2)
+
+coins = []
  #Hitbox Coin
 def collides(p,c):
     dx = p.x - c.x
@@ -85,7 +87,10 @@ while running:
                 opponent.alive = False
                 bullet.alive = False
     
-
+    
+        for coin in coins:
+            if collides(coin):
+                coin.alive = False
             
     new_bullets = []
     for b in bullets:
@@ -93,8 +98,15 @@ while running:
             new_bullets.append(b)
     bullets = new_bullets
 
+    new_coins = []
+    for c in coins:
+        if b.alive:
+            new_coins.append(b)
+    coins = new_coins
+
     ops = [o for o in ops if o.alive]
     
+    c.update()
 
     screen.fill((0, 0, 0))
 
@@ -105,6 +117,8 @@ while running:
         o.draw(screen)
     for b in bullets:
         b.draw(screen)
+    for c in coins:
+        c.draw(screen)
     # flip() the display to put your work on screen
     pygame.display.flip()
 
