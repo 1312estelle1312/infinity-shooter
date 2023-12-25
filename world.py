@@ -34,19 +34,20 @@ class World:
         #"scroll" the default screen
         self.s += self.v
         self.default(self.s)
+        print(self.s)
 
         #"scroll" the old screen
-        for rect in self.current_elements:
-            if rect.shift >= constants.WIDTH * -1:
-                self.current_elements.remove(rect)
-            rect.gen_rect(self.s) 
+        #for rect in self.current_elements:
+            #if rect.shift >= constants.WIDTH * -1:
+                #self.current_elements.remove(rect)
+            #rect.gen_rect(self.s) 
 
         #generate the new screen
-        new_rect = Rects(self.surface)
-        new_rect.gen_rect(0)
+        #new_rect = Rects(self.surface)
+        #new_rect.gen_rect(0)
 
-        self.current_elements.append(new_rect)
-        print(self.current_elements)
+        #self.current_elements.append(new_rect)
+        #print(self.current_elements)
 
         
 
