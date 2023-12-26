@@ -43,7 +43,7 @@ while running:
     randint = random.random()
 
     if randint > 0.95:
-        height_border = random.randrange(100, 200)    
+        height_border = random.randrange(50, 250)    
 
     new_border = Border(screen, 0, height_border)
     new_border.draw()
