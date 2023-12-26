@@ -1,7 +1,7 @@
 import pygame 
 import random
 import constants
-from rects import Rects
+from border import Border
 
 class World:
     def __init__(self, w, h, surface):
@@ -10,7 +10,7 @@ class World:
         self.surface = surface
         self.color = (255, 100, 100)
         self.s = 0
-        self.v = -1
+        self.v = -10
         self.current_elements = []
     
     def default(self, start_x):
@@ -34,20 +34,8 @@ class World:
         #"scroll" the default screen
         self.s += self.v
         self.default(self.s)
-        print(self.s)
 
-        #"scroll" the old screen
-        #for rect in self.current_elements:
-            #if rect.shift >= constants.WIDTH * -1:
-                #self.current_elements.remove(rect)
-            #rect.gen_rect(self.s) 
 
-        #generate the new screen
-        #new_rect = Rects(self.surface)
-        #new_rect.gen_rect(0)
-
-        #self.current_elements.append(new_rect)
-        #print(self.current_elements)
 
         
 

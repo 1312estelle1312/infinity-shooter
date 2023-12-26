@@ -3,7 +3,8 @@
 import pygame
 from world import World
 import constants
-from rects import Rects
+from border import Border
+import random
 
 
 # pygame setup
@@ -17,6 +18,7 @@ running = True
 current_elements = []
 
 world_1 = World(WIDTH, HEIGHT, screen)
+height_border = 100
 
 while running:
     # poll for events
@@ -27,21 +29,30 @@ while running:
 
     screen.fill((0, 0, 0))
 
-    world_1.update()
+    #"scroll" the old screen
+
+    for border in current_elements:
+        if border.shift <= constants.WIDTH * -1:
+            current_elements.remove(border)
+
+        border.shift += world_1.v 
+        border.draw()
+
 
     #generate the new screen
-    new_rect = Rects(screen)
-    new_rect.gen_rect(0)
-    #print(new_rect.shift)
+    randint = random.random()
 
-    current_elements.append(new_rect)
+    if randint > 0.95:
+        height_border = random.randrange(100, 200)    
+
+    new_border = Border(screen, 0, height_border)
+    new_border.draw()
+
+    current_elements.append(new_border)
     #print(current_elements)
 
-    #"scroll" the old screen
-    for rect in current_elements:
-        if rect.shift <= constants.WIDTH * -1:
-            current_elements.remove(rect)
-        rect.gen_rect(world_1.s)
+
+    world_1.update()
 
     # flip() the display to put your work on screen
     pygame.display.flip()
