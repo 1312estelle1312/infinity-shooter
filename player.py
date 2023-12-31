@@ -16,12 +16,12 @@ class Player:
         pygame.draw.circle(screen, "blue", (self.x, self.y), self.r)
 
     def update(self, pressed, touched):
-        if touched == False:
             if pressed[pygame.K_w]:
-                if touched == False:
+                if touched != "up":
                     self.y = self. y - (self.vy + self.world_v)
             elif pressed[pygame.K_s]:
-                self.y = self.y + (self.vy - self.world_v)
+                if touched != "down":
+                    self.y = self.y + (self.vy - self.world_v)
             if pressed[pygame.K_a]:
                 self.x -= self.vx
             elif pressed[pygame.K_d]:

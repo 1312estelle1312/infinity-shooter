@@ -25,7 +25,7 @@ world_1 = World(WIDTH, HEIGHT, screen)
 height_border = 100
 
 #For border
-touched = False
+touched = 0
 
 #Liste für Gegner
 ops = []
@@ -56,10 +56,19 @@ def collide(x1, y1, x2, y2, r1, r2):
     if (dx**2 + dy**2) < ((r1+r2)**2):
         return True    
 
-def collide_border_player(player):
-    for border in current_elements:
+def collide_border_player(player, cl):
+    for border in cl:
         for i in range(border.h):
-            collide(player.x, player.y, border.x, i, p.r, 0)
+            #print(i, border.x)
+            if collide(player.x, player.y, border.x, i, player.r, 0):
+                print("up")
+                return True
+        for i in range(constants.HEIGHT-border.h, constants.HEIGHT):
+            #print(i, border.x)
+            if collide(player.x, player.y, border.x, i, player.r, 0):
+                print("down")
+                return True    
+
 
 while running:
     # poll for events
@@ -76,10 +85,14 @@ while running:
     pressed = pygame.key.get_pressed()
     screen.fill((70, 100, 30))
 
-    #Check if player touched
-    touched = False
-    if collide_border_player(p):
-        touched = True   
+    #Check if player touched border
+    touched = 0
+    if collide_border_player(p, current_elements):
+        if p.y <= constants.HEIGHT/2:
+            touched = "up" 
+        if p.y >= constants.HEIGHT/2:
+            touched = "down"    
+        print(touched)
 
     #Update if player or bullets touched
     p.update(pressed, touched)
@@ -121,13 +134,15 @@ while running:
     #Update coin (REMAKE)
     c.update()
 
-    #"scroll" the old screen
+    #"scroll" the old screen 
+    new_current_elements = []
     for border in current_elements:
-        if border.shift <= constants.WIDTH * -1:
-            current_elements.remove(border)
+        if border.shift >= constants.WIDTH * -1:
+            new_current_elements.append(border)
 
         border.shift += world_1.v 
         border.draw()
+    current_elements = new_current_elements    
 
 
     #generate the new screen
