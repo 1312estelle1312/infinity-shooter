@@ -11,9 +11,6 @@ from opponent import Opponent
 from player import Player
 from bullet import Bullet
 
-
-
-
 # pygame setup
 pygame.init()
 
@@ -27,6 +24,9 @@ current_elements = []
 world_1 = World(WIDTH, HEIGHT, screen)
 height_border = 100
 
+#For border
+touched = False
+
 #Liste für Gegner
 ops = []
 for _ in range(10):
@@ -36,35 +36,31 @@ for _ in range(10):
     vy = random.randint (-1, 0)
     opponent = Opponent(x,y,vy,vx)
     ops.append(opponent)
+
 #Liste für Bullets
 bullets = []
 
 #Spieler
-p = Player(100, HEIGHT/2, 4, 4, 30)
+p = Player(100, HEIGHT/2, 4, 4, 30, world_1.v)
 
-#Hitbox
-def collides(o,b):
-    dx = o.x - b.x
-    dy = o.y - b.y
-    radii = o.radius + b.radius
-    if (dx * dx + dy * dy) < (radii * radii):
-        print("Down")
-        return True
-    else:
-        return False
+#Coins
 c = Coin(WIDTH/1.5, HEIGHT/2)
 
 coins = []
- #Hitbox Coin
-def collides(p,c):
-    dx = p.x - c.x
-    dy = p.y - c.y
-    radii = p.radius + c.radius
-    if (dx * dx + dy * dy) < (radii * radii):
-        print("+1")
-        return True
-    else:
-        return False
+
+#Hitbox
+def collide(x1, y1, x2, y2, r1, r2):
+    dx = x2 - x1
+    dy = y2 - y1
+
+    if (dx**2 + dy**2) < ((r1+r2)**2):
+        return True    
+
+def collide_border_player(player):
+    for border in current_elements:
+        for i in range(border.h):
+            collide(player.x, player.y, border.x, i, p.r, 0)
+
 while running:
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
@@ -78,45 +74,54 @@ while running:
             bullets.append(b) 
     
     pressed = pygame.key.get_pressed()
-    # UPDATE:
-    p.update(pressed)
+    screen.fill((70, 100, 30))
+
+    #Check if player touched
+    touched = False
+    if collide_border_player(p):
+        touched = True   
+
+    #Update if player or bullets touched
+    p.update(pressed, touched)
     for o in ops:
         o.update()
     for b in bullets:
         b.update()
 
-
+    #Check if opponent and bullets collide
     for opponent in ops:
         for bullet in bullets:
-            if collides(opponent,bullet):
+            if collide(opponent.x, opponent.y, bullet.x, bullet.y, opponent.radius, bullet.radius):
                 opponent.alive = False
                 bullet.alive = False
     
-    
+    #Check if oppent and coins collide (REMAKE)
         for coin in coins:
-            if collides(coin):
+            if collide(coin.x, coin.y, bullet.x, bullet.y, bullet.radius, coin.radius):
                 coin.alive = False
-            
+
+
+    #Update bullets      
     new_bullets = []
     for b in bullets:
         if b.alive:
             new_bullets.append(b)
     bullets = new_bullets
 
+    #Update bullets
     new_coins = []
     for c in coins:
         if b.alive:
             new_coins.append(b)
     coins = new_coins
 
+    #Update opponents
     ops = [o for o in ops if o.alive]
     
+    #Update coin (REMAKE)
     c.update()
 
-    screen.fill((0, 0, 0))
-
     #"scroll" the old screen
-
     for border in current_elements:
         if border.shift <= constants.WIDTH * -1:
             current_elements.remove(border)
@@ -128,18 +133,17 @@ while running:
     #generate the new screen
     randint = random.random()
 
-    if randint > 0.95:
+    if randint > 0.99:
         height_border = random.randrange(50, 250)    
 
     new_border = Border(screen, 0, height_border)
     new_border.draw()
 
     current_elements.append(new_border)
-    #print(current_elements)
-
 
     world_1.update()
 
+    #draw ops, bullets and coins
     p.draw(screen)
     for o in ops: 
         o.draw(screen)
@@ -147,6 +151,7 @@ while running:
         b.draw(screen)
     for c in coins:
         c.draw(screen)
+
     # flip() the display to put your work on screen
     pygame.display.flip()
 
