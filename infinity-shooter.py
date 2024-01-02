@@ -24,9 +24,6 @@ current_elements = []
 world_1 = World(WIDTH, HEIGHT, screen)
 height_border = 100
 
-#For border
-touched = 0
-
 #Liste für Gegner
 ops = []
 for _ in range(10):
@@ -53,21 +50,26 @@ def collide(x1, y1, x2, y2, r1, r2):
     dx = x2 - x1
     dy = y2 - y1
 
-    if (dx**2 + dy**2) < ((r1+r2)**2):
+    if (dx**2 + dy**2) <= ((r1+r2)**2):
         return True    
-
+    
 def collide_border_player(player, cl):
+    touched = 0
+    direction = 0
     for border in cl:
-        for i in range(border.h):
-            #print(i, border.x)
+        for i in [*range(0, border.h+1, 10)]+[*range(constants.HEIGHT-border.h, constants.HEIGHT, 10)]:
             if collide(player.x, player.y, border.x, i, player.r, 0):
-                print("up")
-                return True
-        for i in range(constants.HEIGHT-border.h, constants.HEIGHT):
-            #print(i, border.x)
-            if collide(player.x, player.y, border.x, i, player.r, 0):
-                print("down")
-                return True    
+                if player.y < constants.HEIGHT/2:
+                    touched = "up"
+                elif player.y > constants.HEIGHT/2:
+                    touched = "down"
+                if touched == "up" and i != border.h or touched == "down" and i != constants.HEIGHT-border.h:
+                    if player.x < border.x:
+                        direction = "left"
+                    elif player.x > border.x:
+                        direction = "right" 
+                #print(f"t:{touched}, d:{direction}, i:{i}, bord:{border.h}")
+    return touched, direction
 
 
 while running:
@@ -86,16 +88,11 @@ while running:
     screen.fill((70, 100, 30))
 
     #Check if player touched border
-    touched = 0
-    if collide_border_player(p, current_elements):
-        if p.y <= constants.HEIGHT/2:
-            touched = "up" 
-        if p.y >= constants.HEIGHT/2:
-            touched = "down"    
-        print(touched)
+    touched, direction = collide_border_player(p, current_elements)
+    #print(touched, direction)
 
     #Update if player or bullets touched
-    p.update(pressed, touched)
+    p.update(pressed, touched, direction)
     for o in ops:
         o.update()
     for b in bullets:
@@ -114,49 +111,26 @@ while running:
                 coin.alive = False
 
 
-    #Update bullets      
+    #Update bullets if collided  
     new_bullets = []
     for b in bullets:
         if b.alive:
             new_bullets.append(b)
     bullets = new_bullets
 
-    #Update bullets
+    #Update bullets if collided
     new_coins = []
     for c in coins:
         if b.alive:
             new_coins.append(b)
     coins = new_coins
 
-    #Update opponents
+    #Update opponents if collided
     ops = [o for o in ops if o.alive]
     
     #Update coin (REMAKE)
     c.update()
-
-    #"scroll" the old screen 
-    new_current_elements = []
-    for border in current_elements:
-        if border.shift >= constants.WIDTH * -1:
-            new_current_elements.append(border)
-
-        border.shift += world_1.v 
-        border.draw()
-    current_elements = new_current_elements    
-
-
-    #generate the new screen
-    randint = random.random()
-
-    if randint > 0.99:
-        height_border = random.randrange(50, 250)    
-
-    new_border = Border(screen, 0, height_border)
-    new_border.draw()
-
-    current_elements.append(new_border)
-
-    world_1.update()
+    
 
     #draw ops, bullets and coins
     p.draw(screen)
@@ -166,6 +140,29 @@ while running:
         b.draw(screen)
     for c in coins:
         c.draw(screen)
+
+    #"scroll" the old screen 
+    new_current_elements = []
+    for border in current_elements:
+        if border.shift >= constants.WIDTH * -1:
+            new_current_elements.append(border)
+
+        border.shift += world_1.v 
+        border.draw()
+    current_elements = new_current_elements   
+
+    #generate the new screen
+    randint = random.random()
+
+    if randint > 0.99:
+        height_border = random.randrange(50, 250, 10)    
+
+    new_border = Border(screen, 0, height_border)
+    new_border.draw()
+
+    current_elements.append(new_border)
+
+    world_1.update()
 
     # flip() the display to put your work on screen
     pygame.display.flip()
