@@ -38,12 +38,26 @@ for _ in range(10):
 bullets = []
 
 #Spieler
-p = Player(100, HEIGHT/2, 4, 4, 30, world_1.v)
+p = Player(100, HEIGHT/2, 4, 4, 30, "blue", world_1.v, False)
+p2 = Player(100, HEIGHT/2, 4, 4, 30, "red", world_1.v, True)
 
 #Coins
 c = Coin(WIDTH/1.5, HEIGHT/2)
 
 coins = []
+
+#generate initial borders
+for i in range(constants.WIDTH):
+    randint = random.random()
+
+    if randint > 0.99:
+        height_border = random.randrange(50, 250, 10)    
+
+    new_border = Border(screen, -i, height_border)
+    new_border.draw()
+
+    current_elements.append(new_border)
+
 
 #Hitbox
 def collide(x1, y1, x2, y2, r1, r2):
@@ -56,19 +70,19 @@ def collide(x1, y1, x2, y2, r1, r2):
 def collide_border_player(player, cl):
     touched = 0
     direction = 0
-    for border in cl:
-        for i in [*range(0, border.h+1, 10)]+[*range(constants.HEIGHT-border.h, constants.HEIGHT, 10)]:
-            if collide(player.x, player.y, border.x, i, player.r, 0):
+    for border in range(0, len(cl), 10):
+        for i in [*range(0, cl[border].h+1, 10)]+[*range(constants.HEIGHT-cl[border].h, constants.HEIGHT, 10)]:
+            if collide(player.x, player.y, cl[border].x, i, player.r-5, 0):
                 if player.y < constants.HEIGHT/2:
                     touched = "up"
                 elif player.y > constants.HEIGHT/2:
                     touched = "down"
-                if touched == "up" and i != border.h or touched == "down" and i != constants.HEIGHT-border.h:
-                    if player.x < border.x:
+                if touched == "up" and i != cl[border].h or touched == "down" and i != constants.HEIGHT-cl[border].h:
+                    if player.x < cl[border].x:
                         direction = "left"
-                    elif player.x > border.x:
+                    elif player.x > cl[border].x:
                         direction = "right" 
-                #print(f"t:{touched}, d:{direction}, i:{i}, bord:{border.h}")
+                #print(f"t:{touched}, d:{direction}, i:{i}, bord:{cl[border].h}")
     return touched, direction
 
 
@@ -87,12 +101,17 @@ while running:
     pressed = pygame.key.get_pressed()
     screen.fill((70, 100, 30))
 
-    #Check if player touched border
+    #Check if player touched border and update
     touched, direction = collide_border_player(p, current_elements)
-    #print(touched, direction)
-
-    #Update if player or bullets touched
     p.update(pressed, touched, direction)
+
+    touched, direction = collide_border_player(p2, current_elements) 
+    p2.update(pressed, touched, direction)
+
+
+    if p.alive == False or p2.alive == False:
+        running = False
+    
     for o in ops:
         o.update()
     for b in bullets:
@@ -134,6 +153,7 @@ while running:
 
     #draw ops, bullets and coins
     p.draw(screen)
+    p2.draw(screen)
     for o in ops: 
         o.draw(screen)
     for b in bullets:
