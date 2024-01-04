@@ -39,7 +39,7 @@ bullets = []
 
 #Spieler
 p = Player(100, HEIGHT/2, 4, 4, 30, "blue", world_1.v, False)
-p2 = Player(100, HEIGHT/2, 4, 4, 30, "red", world_1.v, True)
+p2 = Player(100, HEIGHT/2, 4, 4, 30, (118, 31, 184), world_1.v, True)
 
 #Coins
 c = Coin(WIDTH/1.5, HEIGHT/2)
@@ -188,5 +188,6 @@ while running:
     pygame.display.flip()
 
     clock.tick(60)  # limits FPS to 60
+    print(clock.get_fps())
 
 pygame.quit()
