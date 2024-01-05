@@ -8,6 +8,7 @@ port = 5555
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+#try to bind port and address
 try:
     s.bind((server, port))
 except socket.error as e:
