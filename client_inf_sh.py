@@ -50,7 +50,7 @@ def main_menu():
     start_screen = True
 
     n = Network()
-    p = n.connect()
+    local_list = n.connect()
     ready_state = "not_ready"
 
     while start_screen:
@@ -71,11 +71,15 @@ def main_menu():
             if (event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN) or ready_state_other == "done":
                 ready_state_other = n.send_and_get("done")
                 for i in range(5):
-                    print(5-i)
+                    #print(5-i)
+                    screen.fill((0, 0, 0))
+                    countdown = font.render(f"Game starts in: {5-i}", True, (255, 255, 255))
+                    screen.blit(countdown, (constants.WIDTH/2 - countdown.get_width()/2, constants.HEIGHT/2 - 4 * countdown.get_height()/2))
+                    pygame.display.update()
                     pygame.time.wait(1000)
-                    print(p.x)
+                    #print(p.x)
                 start_screen = False
-                game(n, p)
+                game(n, local_list)
 
         title = font.render("Infinity Shooter", True, (255, 255, 255))
         ready_button = font.render("Ready [Press R]", True, (255, 255, 255))
@@ -113,7 +117,7 @@ def game_over_screen():
         screen.blit(quit_button, (constants.WIDTH/2 - quit_button.get_width()/2, constants.HEIGHT/2 + quit_button.get_height()/2))
         pygame.display.update()
 
-def game(n, p):
+def game(n, local_list):
     #initial settings
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     clock = pygame.time.Clock()
@@ -122,18 +126,13 @@ def game(n, p):
     world_1 = World(WIDTH, HEIGHT, screen)
     height_border = 100
 
-    #Liste für Gegner
-    ops = []
-    for _ in range(10):
-        x = random.randint(426, 853)
-        y = random.randint (240, 480)
-        vx = random.randint (-1, 0)
-        vy = random.randint (-1, 0)
-        opponent = Opponent(x,y,vy,vx)
-        ops.append(opponent)
+    p = local_list[0]
+    bullets = local_list[1]
+    ops = local_list[2]
+
 
     #Liste für Bullets
-    bullets = []
+    #bullets = []
 
     #Spieler
     #p = Player(100, HEIGHT/2, 4, 4, 30, "blue", world_1.v, False)
@@ -177,17 +176,22 @@ def game(n, p):
         pressed = pygame.key.get_pressed()
         screen.fill((70, 100, 30))
 
-        #Network player
-        p2 = n.send_and_get(p)
-        #print(f"FCCKCKK {p, p2}")
+        #Network player and bullets
+        local_list = [p, bullets, ops]
+        remote_list = n.send_and_get(local_list)
+        
+        p2 = remote_list[0]
+        bullets2 = remote_list[1]
+        ops = remote_list[2]
+
 
         #Check if player touched border and update
         touched, direction = collide_border_player(p, current_elements)
         p.update(pressed, touched, direction)
 
-        print(p2.x)
-        touched, direction = collide_border_player(p2, current_elements) 
-        p2.update(pressed, touched, direction)
+        #print(p2.x) REMAKE
+        #touched, direction = collide_border_player(p2, current_elements) 
+        #p2.update(pressed, touched, direction)
 
 
         if p.alive == False or p2.alive == False:
@@ -195,10 +199,11 @@ def game(n, p):
             game_over_screen()
     
 
-        
         for o in ops:
             o.update()
         for b in bullets:
+            b.update()
+        for b in bullets2:
             b.update()
 
         #Check if opponent and bullets collide
@@ -221,7 +226,7 @@ def game(n, p):
                 new_bullets.append(b)
         bullets = new_bullets
 
-        #Update bullets if collided
+        #Update coins if collided
         new_coins = []
         for c in coins:
             if b.alive:
@@ -241,6 +246,8 @@ def game(n, p):
         for o in ops: 
             o.draw(screen)
         for b in bullets:
+            b.draw(screen)
+        for b in bullets2:
             b.draw(screen)
         for c in coins:
             c.draw(screen)

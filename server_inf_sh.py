@@ -4,6 +4,9 @@ from player import Player
 import pickle
 import constants
 import pygame
+from bullet import Bullet
+import random
+from opponent import Opponent
 
 #ip = input("IP Addresse: ")
 server = "192.168.1.252"
@@ -22,29 +25,29 @@ print("Waiting for a connection, Server Started")
 
 ready_state = {0: "not_ready", 1: "not_ready"}
 players = [Player(100, constants.HEIGHT/2, 4, 4, 30, "blue", -2, False), Player(100, constants.HEIGHT/2, 4, 4, 30, (118, 31, 184), -2, True)]
+list_bullets = [[], []]
+
+#Liste für Gegner
+ops1 = []
+for _ in range(10):
+    x = random.randint(426, 853)
+    y = random.randint (240, 480)
+    vx = random.randint (-1, 0)
+    vy = random.randint (-1, 0)
+    opponent = Opponent(x,y,vy,vx)
+    ops1.append(opponent)
+ops2 = ops1
+ops = [ops1, ops2]
 
 
 def threaded_client(conn, player_id):
-    conn.send(pickle.dumps(players[player_id]))
+    conn.send(pickle.dumps([players[player_id], list_bullets[player_id], ops[player_id]]))
     reply = ""
     running1 = True
     running2 = False
     while running1:
         try:
             data = pickle.loads(conn.recv(2048))
-
-            if data == "done":
-                print(f"working {player_id}")
-                #pygame.time.wait(5000)
-                conn.sendall(pickle.dumps("done"))
-                if player_id == 0:
-                    conn.send(pickle.dumps(players[1]))
-                else:
-                    conn.send(pickle.dumps(players[0]))
-                running2 = True
-                running1 = False
-
-
             ready_state[player_id] = data
 
             if not data:
@@ -60,34 +63,39 @@ def threaded_client(conn, player_id):
                 print(f"Received from {player_id}: {data}")
                 print(f"Sending to {player_id}:  {reply}")
 
+                if data == "done":
+                    print(f"working {player_id}")
+                    running2 = True
+                    running1 = False
+                    reply = "done"
+
             conn.sendall(pickle.dumps(reply))
                 
         except:
             break
     
-    #data = None
-
-    print("sended")
-    reply = ""
+    data_list = []
+    #reply = ""
     while running2:
-        print(f"running on second task {player_id}")
-        #conn.send(pickle.dumps(players[player_id]))
         try:
-            if player_id == 0:
-                conn.send(pickle.dumps(players[1]))
-            else:
-                conn.send(pickle.dumps(players[0]))
-            data = pickle.loads(conn.recv(2048))
-            players[player_id] = data
+            data_list = pickle.loads(conn.recv(2048))
+
+            players[player_id] = data_list[0]
+            list_bullets[player_id] = data_list[1]
+            ops[player_id] = data_list[2]
+            #print(f"{player_id} HEREEEEE {len(ops[1])}")
+            #ops[1] = data_list[2]
+            #ops[0] = ops[1]
+
 
             if not data:
                 print("Disconnected")
                 break
             else:
                 if player_id == 0:
-                    reply = players[1]
+                    reply = [players[1], list_bullets[1], ops[1]]
                 else:
-                    reply = players[0]
+                    reply = [players[0], list_bullets[0], ops[1]]
 
                 print(f"Received from {player_id}: {data}")
                 print(f"Sending to {player_id}:  {reply}")
