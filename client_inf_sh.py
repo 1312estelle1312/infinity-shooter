@@ -185,6 +185,9 @@ def game(n, local_list):
         ops = remote_list[2]
 
 
+        #print(f"Ops: {len(ops)}")
+
+
         #Check if player touched border and update
         touched, direction = collide_border_player(p, current_elements)
         p.update(pressed, touched, direction)
@@ -195,6 +198,7 @@ def game(n, local_list):
 
 
         if p.alive == False or p2.alive == False:
+            game_over_state = n.send_and_get("game_over")
             running = False
             game_over_screen()
     
@@ -212,6 +216,7 @@ def game(n, local_list):
                 if collide(opponent.x, opponent.y, bullet.x, bullet.y, opponent.radius, bullet.radius):
                     opponent.alive = False
                     bullet.alive = False
+
         
         #Check if oppent and coins collide (REMAKE)
             for coin in coins:
@@ -234,7 +239,11 @@ def game(n, local_list):
         coins = new_coins
 
         #Update opponents if collided
-        ops = [o for o in ops if o.alive]
+        new_opponents = []
+        for opponent in ops:
+            if opponent.alive:
+                new_opponents.append(opponent)
+        ops = new_opponents
         
         #Update coin (REMAKE)
         c.update()

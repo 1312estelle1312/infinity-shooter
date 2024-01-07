@@ -75,19 +75,17 @@ def threaded_client(conn, player_id):
             break
     
     data_list = []
-    #reply = ""
+    reply = ""
     while running2:
         try:
             data_list = pickle.loads(conn.recv(2048))
 
             players[player_id] = data_list[0]
             list_bullets[player_id] = data_list[1]
-            ops[player_id] = data_list[2]
-            #print(f"{player_id} HEREEEEE {len(ops[1])}")
-            #ops[1] = data_list[2]
-            #ops[0] = ops[1]
-
-
+            ops[0] = data_list[2]
+            ops[1] = data_list[2]
+            #print(f"Ops: {len(ops[0]), player_id}")
+    
             if not data:
                 print("Disconnected")
                 break
@@ -95,11 +93,14 @@ def threaded_client(conn, player_id):
                 if player_id == 0:
                     reply = [players[1], list_bullets[1], ops[1]]
                 else:
-                    reply = [players[0], list_bullets[0], ops[1]]
+                    reply = [players[0], list_bullets[0], ops[0]]
 
                 print(f"Received from {player_id}: {data}")
                 print(f"Sending to {player_id}:  {reply}")
-
+                
+            if data == "game_over":
+                
+                reply = "game_over"
             conn.sendall(pickle.dumps(reply))
         except:
             break
