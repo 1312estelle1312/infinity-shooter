@@ -141,6 +141,7 @@ def main_menu():
         screen.blit(title, (constants.WIDTH/2 - title.get_width()/2, constants.HEIGHT/2 - title.get_height()/2))
         screen.blit(ready_button, (constants.WIDTH/2 - ready_button.get_width()/2, constants.HEIGHT/2 + 3*ready_button.get_height()/2))
         pygame.display.update()
+        #Highscore print
 
 def game_over_screen():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -179,6 +180,7 @@ def game(n, multiplayer, local_list):
 
     world_1 = World(WIDTH, HEIGHT, screen)
     height_border = 100
+    highscore = 0
 
     if multiplayer:
         p = local_list[0]
@@ -304,13 +306,18 @@ def game(n, multiplayer, local_list):
                 if collide(opponent.x, opponent.y, bullet.x, bullet.y, opponent.r, bullet.r):
                     opponent.alive = False
                     bullet.alive = False
+                    highscore += 1
+                    print ("Highscore", highscore)
+                    
+            
+        #highscore
+        text = font.render(f"Highscore: {highscore}", True, (255,255,255))
+        screen.blit(text, (10, 10))
 
-        
         #Check if oppent and coins collide (REMAKE)
-            for coin in coins:
-                if collide(coin.x, coin.y, bullet.x, bullet.y, bullet.r, coin.r):
-                    coin.alive = False
-
+        for coin in coins:
+            if collide(coin.x, coin.y, bullet.x, bullet.y, bullet.r, coin.r):
+                coin.alive = False
 
         #Update bullets if collided  
         new_bullets = []
@@ -334,8 +341,8 @@ def game(n, multiplayer, local_list):
         ops = new_opponents
         
         #Update coin (REMAKE)
-        c.update()
-        
+        c.update() 
+
 
         #draw ops, bullets and coins
         p.draw(screen)
@@ -371,7 +378,9 @@ def game(n, multiplayer, local_list):
         new_border.draw()
 
         current_elements.append(new_border)
-
+        #highscore
+        text = font.render(f"score: {highscore}", True, (255,255,255))
+        screen.blit(text, (10, 10))
         world_1.update()
 
         # flip() the display to put your work on screen
