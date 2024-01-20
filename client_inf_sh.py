@@ -58,7 +58,8 @@ def collide_border_player(player, cl):
 
 def menu():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    while True:
+    menu_screen = True
+    while menu_screen:
  
         screen.fill((81, 79, 97))
         draw_text('Main Menu', font, (255, 255, 255), screen, WIDTH/2-85, 40)
@@ -72,9 +73,11 @@ def menu():
         #defining functions when a certain button is pressed
         if button_1.collidepoint((mx, my)):
             if click:
+                menu_screen = False
                 main_menu()
         if button_2.collidepoint((mx, my)):
             if click:
+                menu_screen = False
                 game(0, False, 0)
 
         pygame.draw.rect(screen, (255, 0, 0), button_1)
@@ -116,7 +119,7 @@ def main_menu():
 
         ready_state_other = n.send_and_get(ready_state)
 
-        screen.fill((0, 0, 0))
+        screen.fill((81, 79, 97))
         font = pygame.font.SysFont(None, 40)
 
         if (ready_state == "ready" and ready_state_other == "ready") or ready_state_other == "done":
@@ -126,7 +129,7 @@ def main_menu():
                 ready_state_other = n.send_and_get("done")
                 for i in range(5):
                     #print(5-i)
-                    screen.fill((0, 0, 0))
+                    screen.fill((81, 79, 97))
                     countdown = font.render(f"Game starts in: {5-i}", True, (255, 255, 255))
                     screen.blit(countdown, (constants.WIDTH/2 - countdown.get_width()/2, constants.HEIGHT/2 - 4 * countdown.get_height()/2))
                     pygame.display.update()
@@ -146,22 +149,18 @@ def game_over_screen():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     end_screen = True
 
-    #Network handling
-    #n = Network()
-
-
     while end_screen:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 end_screen = False
             if (event.type == pygame.KEYDOWN and event.key == pygame.K_r):
                 end_screen = False
-                game()
+                menu()
             if (event.type == pygame.KEYDOWN and event.key == pygame.K_q):
                 end_screen = False
                 pygame.quit()
         
-        screen.fill((0, 0, 0))
+        screen.fill((81, 79, 97))
         font = pygame.font.SysFont(None, 40)
         title = font.render('Game Over', True, (255, 255, 255))
         restart_button = font.render('R - Restart', True, (255, 255, 255))
@@ -184,6 +183,8 @@ def game(n, multiplayer, local_list):
         p = local_list[0]
         bullets = local_list[1]
         ops = local_list[2]
+
+
     if not multiplayer:
         p = Player(100, constants.HEIGHT/2, 4, 4, 30, "blue", -2, False)
         bullets = []
@@ -215,7 +216,7 @@ def game(n, multiplayer, local_list):
 
         current_elements.append(new_border)
 
-    game_over_state = [""]
+    game_over_state = False
 
     running = True
     while running:
@@ -236,14 +237,14 @@ def game(n, multiplayer, local_list):
 
         #Network player and bullets
         if multiplayer:
-            local_list = [p, bullets, ops]
+            local_list = [p, bullets, ops, game_over_state]
             remote_list = n.send_and_get(local_list)
 
-            print(f"NEEEEEEE{remote_list}")
-
-            if remote_list[0] == "game_over":
-                print(f"HHHHH{remote_list}")
-                game_over_state[0] = "game_over"
+            if remote_list[4][0]:
+                running = False
+                n.disconnect()
+                game_over_screen()
+                continue
 
             
             p2 = remote_list[0]
@@ -279,15 +280,10 @@ def game(n, multiplayer, local_list):
 
         if p.alive == False:
             if multiplayer:
-                game_over_state[0] = "game_over"
-                game_over_state[0] = n.send_and_get(game_over_state[0])
-            else:
+                game_over_state = True
                 continue
-
             running = False
             game_over_screen()
-        
-    
 
         for o in ops:
             o.update()

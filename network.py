@@ -22,3 +22,8 @@ class Network:
             return pickle.loads(self.client.recv(2048))
         except socket.error as e:
             print(e)
+    def disconnect(self):
+        try:
+            self.client.close() 
+        except socket.error as e:
+            print(e)
