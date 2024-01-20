@@ -36,12 +36,13 @@ for _ in range(10):
     vy = random.randint (-1, 0)
     opponent = Opponent(x,y,vy,vx)
     ops1.append(opponent)
-ops2 = ops1
+ops2 = ops1[:]
+
 ops = [ops1, ops2]
 
 
 def threaded_client(conn, player_id):
-    conn.send(pickle.dumps([players[player_id], list_bullets[player_id], ops[player_id]]))
+    conn.send(pickle.dumps([players[player_id], list_bullets[player_id], ops[0], ops[1]]))
     reply = ""
     running1 = True
     running2 = False
@@ -82,25 +83,26 @@ def threaded_client(conn, player_id):
 
             players[player_id] = data_list[0]
             list_bullets[player_id] = data_list[1]
-            ops[0] = data_list[2]
-            ops[1] = data_list[2]
+            ops[player_id] = data_list[2]
             #print(f"Ops: {len(ops[0]), player_id}")
+
     
-            if not data:
+            if not data_list:
                 print("Disconnected")
                 break
             else:
                 if player_id == 0:
-                    reply = [players[1], list_bullets[1], ops[1]]
+                    reply = [players[1], list_bullets[1], ops[0], ops[1]]
                 else:
-                    reply = [players[0], list_bullets[0], ops[0]]
+                    reply = [players[0], list_bullets[0], ops[0], ops[1]]
 
                 print(f"Received from {player_id}: {data}")
                 print(f"Sending to {player_id}:  {reply}")
                 
-            if data == "game_over":
-                
-                reply = "game_over"
+            if data_list[0] == "game_over":
+                reply = ["game_over"]
+
+
             conn.sendall(pickle.dumps(reply))
         except:
             break

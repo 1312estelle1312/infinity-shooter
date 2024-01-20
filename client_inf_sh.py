@@ -19,6 +19,16 @@ pygame.display.set_caption("Client")
 WIDTH = constants.WIDTH
 HEIGHT = constants.HEIGHT
 
+font = pygame.font.SysFont(None, 40)
+bg = pygame.image.load("static/bg.jpg")
+bg = pygame.transform.scale(bg, ((WIDTH, HEIGHT)))
+
+def draw_text(text, font, color, surface, x, y):
+    textobj = font.render(text, 1, color)
+    textrect = textobj.get_rect()
+    textrect.topleft = (x, y)
+    surface.blit(textobj, textrect)
+
 #Hitbox
 def collide(x1, y1, x2, y2, r1, r2):
     dx = x2 - x1
@@ -45,6 +55,50 @@ def collide_border_player(player, cl):
                 #print(f"t:{touched}, d:{direction}, i:{i}, bord:{cl[border].h}")
     return touched, direction
  
+
+def menu():
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    while True:
+ 
+        screen.fill((81, 79, 97))
+        draw_text('Main Menu', font, (255, 255, 255), screen, WIDTH/2-85, 40)
+ 
+        mx, my = pygame.mouse.get_pos()
+
+        #creating buttons
+        button_1 = pygame.Rect(WIDTH/2-100, HEIGHT/2-50, 250, 50)
+        button_2 = pygame.Rect(WIDTH/2-100, HEIGHT/2+50, 250, 50)
+
+        #defining functions when a certain button is pressed
+        if button_1.collidepoint((mx, my)):
+            if click:
+                main_menu()
+        if button_2.collidepoint((mx, my)):
+            if click:
+                game(0, False, 0)
+
+        pygame.draw.rect(screen, (255, 0, 0), button_1)
+        pygame.draw.rect(screen, (255, 0, 0), button_2)
+ 
+        #writing text on top of button
+        draw_text('MUTLIPLAYER', font, (255,255,255), screen, WIDTH/2-85, HEIGHT/2-50+15)
+        draw_text('SINGLEPLAYER', font, (255,255,255), screen, WIDTH/2-85, HEIGHT/2+50+15)
+
+
+        click = False
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    click = True
+ 
+        pygame.display.update()
+
+
 def main_menu():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     start_screen = True
@@ -61,7 +115,7 @@ def main_menu():
                 ready_state = "ready"
 
         ready_state_other = n.send_and_get(ready_state)
-        
+
         screen.fill((0, 0, 0))
         font = pygame.font.SysFont(None, 40)
 
@@ -79,7 +133,7 @@ def main_menu():
                     pygame.time.wait(1000)
                     #print(p.x)
                 start_screen = False
-                game(n, local_list)
+                game(n, True, local_list)
 
         title = font.render("Infinity Shooter", True, (255, 255, 255))
         ready_button = font.render("Ready [Press R]", True, (255, 255, 255))
@@ -117,7 +171,7 @@ def game_over_screen():
         screen.blit(quit_button, (constants.WIDTH/2 - quit_button.get_width()/2, constants.HEIGHT/2 + quit_button.get_height()/2))
         pygame.display.update()
 
-def game(n, local_list):
+def game(n, multiplayer, local_list):
     #initial settings
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     clock = pygame.time.Clock()
@@ -126,26 +180,27 @@ def game(n, local_list):
     world_1 = World(WIDTH, HEIGHT, screen)
     height_border = 100
 
-    p = local_list[0]
-    bullets = local_list[1]
-    ops = local_list[2]
+    if multiplayer:
+        p = local_list[0]
+        bullets = local_list[1]
+        ops = local_list[2]
+    if not multiplayer:
+        p = Player(100, constants.HEIGHT/2, 4, 4, 30, "blue", -2, False)
+        bullets = []
+        ops = []
+        for _ in range(10):
+            x = random.randint(426, 853)
+            y = random.randint (240, 480)
+            vx = random.randint (-1, 0)
+            vy = random.randint (-1, 0)
+            opponent = Opponent(x,y,vy,vx)
+            ops.append(opponent)
 
-
-    #Liste für Bullets
-    #bullets = []
-
-    #Spieler
-    #p = Player(100, HEIGHT/2, 4, 4, 30, "blue", world_1.v, False)
-    #p2 = Player(100, HEIGHT/2, 4, 4, 30, (118, 31, 184), world_1.v, True)
 
     #Coins
     c = Coin(WIDTH/1.5, HEIGHT/2)
 
     coins = []
-
-    #Network handling
-    #n = Network()
-    #n.connect()
 
     #generate initial borders
     for i in range(constants.WIDTH):
@@ -159,6 +214,8 @@ def game(n, local_list):
         new_border.draw()
 
         current_elements.append(new_border)
+
+    game_over_state = [""]
 
     running = True
     while running:
@@ -175,52 +232,83 @@ def game(n, local_list):
         
         pressed = pygame.key.get_pressed()
         screen.fill((70, 100, 30))
+        screen.blit(bg, (0, 0))
 
         #Network player and bullets
-        local_list = [p, bullets, ops]
-        remote_list = n.send_and_get(local_list)
-        
-        p2 = remote_list[0]
-        bullets2 = remote_list[1]
-        ops = remote_list[2]
+        if multiplayer:
+            local_list = [p, bullets, ops]
+            remote_list = n.send_and_get(local_list)
 
+            print(f"NEEEEEEE{remote_list}")
 
-        #print(f"Ops: {len(ops)}")
+            if remote_list[0] == "game_over":
+                print(f"HHHHH{remote_list}")
+                game_over_state[0] = "game_over"
+
+            
+            p2 = remote_list[0]
+            bullets2 = remote_list[1]
+            ops0 = remote_list[2]
+            ops1 = remote_list[3]
+
+            #Choose the right enemy list
+            if len(ops0) < len(ops1):
+                ops = ops0
+            elif len(ops1) < len(ops0):
+                ops = ops1
+            else:
+                ops = ops0
 
 
         #Check if player touched border and update
         touched, direction = collide_border_player(p, current_elements)
         p.update(pressed, touched, direction)
 
-        #print(p2.x) REMAKE
-        #touched, direction = collide_border_player(p2, current_elements) 
-        #p2.update(pressed, touched, direction)
+        #Check if opponents touched border and update
+        for op in ops:
+            touched, direction = collide_border_player(op, current_elements)
+            if touched == "up" or touched == "down":
+                op.vy = op.vy * -1
+            
+        #Check if opponents and player touch
+        for op in ops:
+            if collide(op.x, op.y, p.x, p.y, op.r, p.r):
+                p.health = p.health - 1
+                op.alive = False
 
 
-        if p.alive == False or p2.alive == False:
-            game_over_state = n.send_and_get("game_over")
+        if p.alive == False:
+            if multiplayer:
+                game_over_state[0] = "game_over"
+                game_over_state[0] = n.send_and_get(game_over_state[0])
+            else:
+                continue
+
             running = False
             game_over_screen()
+        
     
 
         for o in ops:
             o.update()
         for b in bullets:
             b.update()
-        for b in bullets2:
-            b.update()
+
+        if multiplayer:
+            for b in bullets2:
+                b.update()
 
         #Check if opponent and bullets collide
         for opponent in ops:
             for bullet in bullets:
-                if collide(opponent.x, opponent.y, bullet.x, bullet.y, opponent.radius, bullet.radius):
+                if collide(opponent.x, opponent.y, bullet.x, bullet.y, opponent.r, bullet.r):
                     opponent.alive = False
                     bullet.alive = False
 
         
         #Check if oppent and coins collide (REMAKE)
             for coin in coins:
-                if collide(coin.x, coin.y, bullet.x, bullet.y, bullet.radius, coin.radius):
+                if collide(coin.x, coin.y, bullet.x, bullet.y, bullet.r, coin.r):
                     coin.alive = False
 
 
@@ -251,13 +339,15 @@ def game(n, local_list):
 
         #draw ops, bullets and coins
         p.draw(screen)
-        p2.draw(screen)
+        if multiplayer:
+            p2.draw(screen)
         for o in ops: 
             o.draw(screen)
         for b in bullets:
             b.draw(screen)
-        for b in bullets2:
-            b.draw(screen)
+        if multiplayer:
+            for b in bullets2:
+                b.draw(screen)
         for c in coins:
             c.draw(screen)
 
@@ -292,4 +382,4 @@ def game(n, local_list):
         #print(clock.get_fps())
 
 
-main_menu()
+menu()
