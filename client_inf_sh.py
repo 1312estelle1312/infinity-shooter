@@ -6,7 +6,6 @@ from world import World
 import constants
 from border import Border
 import random
-from coin import Coin
 from opponent import Opponent
 from player import Player
 from bullet import Bullet
@@ -35,8 +34,7 @@ def collide(x1, y1, x2, y2, r1, r2):
     dy = y2 - y1
 
     if (dx**2 + dy**2) <= ((r1+r2)**2):
-        return True    
-    
+        return True     
 def collide_border_player(player, cl):
     touched = 0
     direction = 0
@@ -54,8 +52,7 @@ def collide_border_player(player, cl):
                         direction = "right" 
                 #print(f"t:{touched}, d:{direction}, i:{i}, bord:{cl[border].h}")
     return touched, direction
- 
-
+    
 def menu():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     while True:
@@ -141,6 +138,7 @@ def main_menu():
         screen.blit(title, (constants.WIDTH/2 - title.get_width()/2, constants.HEIGHT/2 - title.get_height()/2))
         screen.blit(ready_button, (constants.WIDTH/2 - ready_button.get_width()/2, constants.HEIGHT/2 + 3*ready_button.get_height()/2))
         pygame.display.update()
+        #Highscore print
 
 def game_over_screen():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -179,6 +177,7 @@ def game(n, multiplayer, local_list):
 
     world_1 = World(WIDTH, HEIGHT, screen)
     height_border = 100
+    highscore = 0
 
     if multiplayer:
         p = local_list[0]
@@ -197,10 +196,6 @@ def game(n, multiplayer, local_list):
             ops.append(opponent)
 
 
-    #Coins
-    c = Coin(WIDTH/1.5, HEIGHT/2)
-
-    coins = []
 
     #generate initial borders
     for i in range(constants.WIDTH):
@@ -304,13 +299,17 @@ def game(n, multiplayer, local_list):
                 if collide(opponent.x, opponent.y, bullet.x, bullet.y, opponent.r, bullet.r):
                     opponent.alive = False
                     bullet.alive = False
+                    highscore += 1
+                    print ("Highscore", highscore)          
+            
+        #highscore
+        text = font.render(f"Highscore: {highscore}", True, (255,255,255))
+        screen.blit(text, (10, 10))
 
-        
         #Check if oppent and coins collide (REMAKE)
-            for coin in coins:
-                if collide(coin.x, coin.y, bullet.x, bullet.y, bullet.r, coin.r):
-                    coin.alive = False
-
+        for coin in coins:
+            if collide(coin.x, coin.y, bullet.x, bullet.y, bullet.r, coin.r):
+                coin.alive = False
 
         #Update bullets if collided  
         new_bullets = []
@@ -319,12 +318,7 @@ def game(n, multiplayer, local_list):
                 new_bullets.append(b)
         bullets = new_bullets
 
-        #Update coins if collided
-        new_coins = []
-        for c in coins:
-            if b.alive:
-                new_coins.append(b)
-        coins = new_coins
+
 
         #Update opponents if collided
         new_opponents = []
@@ -334,8 +328,8 @@ def game(n, multiplayer, local_list):
         ops = new_opponents
         
         #Update coin (REMAKE)
-        c.update()
-        
+        c.update() 
+
 
         #draw ops, bullets and coins
         p.draw(screen)
@@ -371,7 +365,9 @@ def game(n, multiplayer, local_list):
         new_border.draw()
 
         current_elements.append(new_border)
-
+        #highscore
+        text = font.render(f"score: {highscore}", True, (255,255,255))
+        screen.blit(text, (10, 10))
         world_1.update()
 
         # flip() the display to put your work on screen
