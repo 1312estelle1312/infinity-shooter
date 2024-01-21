@@ -11,6 +11,7 @@ from player import Player
 from bullet import Bullet
 from network import Network
 from coin import Coin
+from healthbar import Healthbar
 
 # pygame setup
 pygame.init()
@@ -179,6 +180,8 @@ def game(n, multiplayer, local_list):
     height_border = 100
     highscore = 0
     coins = 0
+    health_bar = Healthbar(WIDTH-200,10, 180, 30, 3)
+
 
     if multiplayer:
         p = local_list[0]
@@ -280,6 +283,7 @@ def game(n, multiplayer, local_list):
         for op in ops:
             if collide(op.x, op.y, p.x, p.y, op.r, p.r):
                 p.health = p.health - 1
+                health_bar.hp = health_bar.hp - 1
                 op.alive = False
         for coin in cs:
             if collide(p.x, p.y, coin.x, coin.y, p.r, coin.r):
@@ -357,6 +361,8 @@ def game(n, multiplayer, local_list):
                 b.draw(screen)
         for c in cs:
             c.draw(screen)
+
+        
         
 
         #"scroll" the old screen 
@@ -386,7 +392,7 @@ def game(n, multiplayer, local_list):
         #Coins
         text = font.render(f"Coins: {coins}", True, (255, 255, 255))
         screen.blit(text, (10, HEIGHT - 35))
-        
+        health_bar.draw(screen)
         world_1.update()
 
         
