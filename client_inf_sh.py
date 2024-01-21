@@ -74,18 +74,18 @@ def menu():
         if button_1.collidepoint((mx, my)):
             if click:
                 menu_screen = False
-                main_menu()
+                game(0, False, 0)
         if button_2.collidepoint((mx, my)):
             if click:
                 menu_screen = False
-                game(0, False, 0)
+                main_menu()
 
         pygame.draw.rect(screen, (255, 0, 0), button_1)
         pygame.draw.rect(screen, (255, 0, 0), button_2)
  
         #writing text on top of button
-        draw_text('MUTLIPLAYER', font, (255,255,255), screen, WIDTH/2-85, HEIGHT/2-50+15)
-        draw_text('SINGLEPLAYER', font, (255,255,255), screen, WIDTH/2-85, HEIGHT/2+50+15)
+        draw_text('SINGLEPLAYER', font, (255,255,255), screen, WIDTH/2-85, HEIGHT/2-50+15)
+        draw_text('MULTIPLAYER', font, (255,255,255), screen, WIDTH/2-85, HEIGHT/2+50+15)
 
 
         click = False
