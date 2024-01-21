@@ -1,5 +1,5 @@
 import socket
-from _thread import *
+from threading import Thread
 from player import Player
 import pickle
 import constants
@@ -7,12 +7,14 @@ import pygame
 from bullet import Bullet
 import random
 from opponent import Opponent
+import sys
 
 #ip = input("IP Addresse: ")
 server = "192.168.1.252"
 port = 5555
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
 
 try:
     s.bind((server, port))
@@ -24,6 +26,7 @@ print("Waiting for a connection, Server Started")
 
 
 ready_state = {0: "not_ready", 1: "not_ready"}
+game_over_state = [False]
 players = [Player(100, constants.HEIGHT/2, 4, 4, 30, "blue", -2, False), Player(100, constants.HEIGHT/2, 4, 4, 30, (118, 31, 184), -2, True)]
 list_bullets = [[], []]
 
@@ -40,9 +43,10 @@ ops2 = ops1[:]
 
 ops = [ops1, ops2]
 
+connected = [False, False]
 
 def threaded_client(conn, player_id):
-    conn.send(pickle.dumps([players[player_id], list_bullets[player_id], ops[0], ops[1]]))
+    conn.send(pickle.dumps([players[player_id], list_bullets[player_id], ops[0], ops[1], game_over_state[0]]))
     reply = ""
     running1 = True
     running2 = False
@@ -79,48 +83,87 @@ def threaded_client(conn, player_id):
     reply = ""
     while running2:
         try:
-            data_list = pickle.loads(conn.recv(2048))
+            try:
+                data_list = pickle.loads(conn.recv(2048))
+            #print(data_list)
+            except Exception as e:
+                break
 
             players[player_id] = data_list[0]
             list_bullets[player_id] = data_list[1]
             ops[player_id] = data_list[2]
-            #print(f"Ops: {len(ops[0]), player_id}")
 
-    
-            if not data_list:
+            if data_list[3]:
+                game_over_state[0] = True
+
+            if not data_list[:]:
                 print("Disconnected")
                 break
             else:
                 if player_id == 0:
-                    reply = [players[1], list_bullets[1], ops[0], ops[1]]
+                    reply = [players[1], list_bullets[1], ops[0], ops[1], game_over_state]
                 else:
-                    reply = [players[0], list_bullets[0], ops[0], ops[1]]
+                    reply = [players[0], list_bullets[0], ops[0], ops[1], game_over_state]
 
-                print(f"Received from {player_id}: {data}")
-                print(f"Sending to {player_id}:  {reply}")
-                
-            if data_list[0] == "game_over":
-                reply = ["game_over"]
-
+            #print(f"Received from {player_id}: {data_list}")
+            #print(f"Sending to {player_id}:  {reply}")
 
             conn.sendall(pickle.dumps(reply))
         except:
             break
 
     print("Connection closed")
+    connected[player_id] = False
+    print(connected)
+    running2 = False
     conn.close()
-
 
 
 currentPlayer = 0
 
 
 running = True
+s.settimeout(1)
+
 while running:
-    conn, addr = s.accept()
-    print("Connected to: ", addr)
+    try:
+        conn, addr = s.accept()
+        print("Connected to: ", addr)
 
-    start_new_thread(threaded_client, (conn, currentPlayer))
 
-    currentPlayer += 1
+        Thread(target=threaded_client, args=(conn, currentPlayer)).start()
+
+        connected[currentPlayer] = True
+        currentPlayer += 1
+    except socket.timeout:
+        #print(connected)
+        if not connected[0] and not connected[1]:
+            #print("Server bereit zum verbinden")
+            currentPlayer = 0
+            ready_state = {0: "not_ready", 1: "not_ready"}
+            game_over_state = [False]
+            players = [Player(100, constants.HEIGHT/2, 4, 4, 30, "blue", -2, False), Player(100, constants.HEIGHT/2, 4, 4, 30, (118, 31, 184), -2, True)]
+            list_bullets = [[], []]
+
+            #Liste für Gegner
+            ops1 = []
+            for _ in range(10):
+                x = random.randint(426, 853)
+                y = random.randint (240, 480)
+                vx = random.randint (-1, 0)
+                vy = random.randint (-1, 0)
+                opponent = Opponent(x,y,vy,vx)
+                ops1.append(opponent)
+            ops2 = ops1[:]
+
+            ops = [ops1, ops2]
+
+
+
+
+
+
+
+
+
 
