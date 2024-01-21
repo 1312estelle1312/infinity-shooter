@@ -10,6 +10,7 @@ from opponent import Opponent
 from player import Player
 from bullet import Bullet
 from network import Network
+from coin import Coin
 
 # pygame setup
 pygame.init()
@@ -177,6 +178,7 @@ def game(n, multiplayer, local_list):
     world_1 = World(WIDTH, HEIGHT, screen)
     height_border = 100
     highscore = 0
+    coins = 0
 
     if multiplayer:
         p = local_list[0]
@@ -188,6 +190,7 @@ def game(n, multiplayer, local_list):
         p = Player(100, constants.HEIGHT/2, 4, 4, 30, "blue", -2, False)
         bullets = []
         ops = []
+        cs = []
         for _ in range(10):
             x = random.randint(426, 853)
             y = random.randint (240, 480)
@@ -195,6 +198,13 @@ def game(n, multiplayer, local_list):
             vy = random.randint (-1, 0)
             opponent = Opponent(x,y,vy,vx)
             ops.append(opponent)
+        for _ in range(3):
+            x = random.randint(853, WIDTH - 30)
+            y = random.randint (200, 520)
+            vx = world_1.v
+            coin = Coin(x,y,vx)
+            cs.append(coin)
+
 
 
 
@@ -271,7 +281,12 @@ def game(n, multiplayer, local_list):
             if collide(op.x, op.y, p.x, p.y, op.r, p.r):
                 p.health = p.health - 1
                 op.alive = False
-
+        for coin in cs:
+            if collide(p.x, p.y, coin.x, coin.y, p.r, coin.r):
+                coin.alive = False
+                coins += 1
+                
+        
 
         if p.alive == False:
             if multiplayer:
@@ -288,6 +303,9 @@ def game(n, multiplayer, local_list):
         if multiplayer:
             for b in bullets2:
                 b.update()
+        #Update coin (REMAKE)
+        for coin in cs:
+            coin.update()
 
         #Check if opponent and bullets collide
         for opponent in ops:
@@ -296,16 +314,9 @@ def game(n, multiplayer, local_list):
                     opponent.alive = False
                     bullet.alive = False
                     highscore += 1
-                    print ("Highscore", highscore)          
-            
-        #highscore
-        text = font.render(f"Highscore: {highscore}", True, (255,255,255))
-        screen.blit(text, (10, 10))
+                                  
 
         #Check if oppent and coins collide (REMAKE)
-        for coin in coins:
-            if collide(coin.x, coin.y, bullet.x, bullet.y, bullet.r, coin.r):
-                coin.alive = False
 
         #Update bullets if collided  
         new_bullets = []
@@ -322,9 +333,15 @@ def game(n, multiplayer, local_list):
             if opponent.alive:
                 new_opponents.append(opponent)
         ops = new_opponents
+
+        #Update coins if collided
+        new_coins = []
+        for coin in cs:
+            if coin.alive:
+                new_coins.append(coin)
+        cs = new_coins
         
-        #Update coin (REMAKE)
-        c.update() 
+        
 
 
         #draw ops, bullets and coins
@@ -338,8 +355,9 @@ def game(n, multiplayer, local_list):
         if multiplayer:
             for b in bullets2:
                 b.draw(screen)
-        for c in coins:
+        for c in cs:
             c.draw(screen)
+        
 
         #"scroll" the old screen 
         new_current_elements = []
@@ -364,7 +382,14 @@ def game(n, multiplayer, local_list):
         #highscore
         text = font.render(f"score: {highscore}", True, (255,255,255))
         screen.blit(text, (10, 10))
+
+        #Coins
+        text = font.render(f"Coins: {coins}", True, (255, 255, 255))
+        screen.blit(text, (10, HEIGHT - 35))
+        
         world_1.update()
+
+        
 
         # flip() the display to put your work on screen
         pygame.display.flip()
