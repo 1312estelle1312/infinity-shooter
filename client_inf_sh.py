@@ -30,6 +30,9 @@ pic_player = pygame.transform.scale(pic_player, ((60, 60)))
 pic_op = pygame.image.load("static/tiger.png")
 pic_op = pygame.transform.scale(pic_op, ((60, 60)))
 
+pic_coin = pygame.image.load("static/coin.png")
+pic_coin = pygame.transform.scale(pic_coin, ((40, 40)))
+
 def draw_text(text, font, color, surface, x, y):
     textobj = font.render(text, 1, color)
     textrect = textobj.get_rect()
@@ -174,7 +177,6 @@ def game_over_screen():
         screen.blit(quit_button, (constants.WIDTH/2 - quit_button.get_width()/2, constants.HEIGHT/2 + quit_button.get_height()/2))
         pygame.display.update()
 
-
 def game(n, multiplayer, local_list):
     #initial settings
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -233,8 +235,6 @@ def game(n, multiplayer, local_list):
 
     ops_new = []
 
-    ops2_old = []
-
     running = True
     while running:
         # poll for events
@@ -263,8 +263,6 @@ def game(n, multiplayer, local_list):
                 game_over_screen()
                 continue
 
-            ops2_old = ops[:]
-
             p2 = remote_list[0]
             bullets2 = remote_list[1]
             ops2 = remote_list[2]
@@ -277,7 +275,6 @@ def game(n, multiplayer, local_list):
             if len(ops2) < len(ops):
                 ops = ops2[:]
 
-            print(world_1.s*-1, WIDTH*number_length)
             ops_new = []
             if world_1.s*-1 <= WIDTH*number_length+10 and world_1.s*-1 >= WIDTH*number_length-10:
                 for _ in range(6):
@@ -306,6 +303,12 @@ def game(n, multiplayer, local_list):
                     vy = random.uniform (-0.5, 0)
                     opponent = Opponent(x,y,vx,vy)
                     ops.append(opponent)  
+                for _ in range(3):
+                    x = random.randint(853, WIDTH - 30)
+                    y = random.randint (200, 520)
+                    vx = world_1.v
+                    coin = Coin(x,y,vx)
+                    cs.append(coin)
                 if number_length >= 2:
                     for _ in range(3):
                         x = random.randint(0, 150)
@@ -315,7 +318,11 @@ def game(n, multiplayer, local_list):
                         opponent = Opponent(x,y,vx,vy)
                         ops.append(opponent) 
                 number_length = number_length + 0.5 
-
+            for coin in cs:
+                if collide(p.x, p.y, coin.x, coin.y, p.r, coin.r):
+                    coin.alive = False
+                    coins += 1
+            
 
         #Check if player touched border and update
         touched, direction = collide_border_player(p, current_elements)
@@ -333,13 +340,7 @@ def game(n, multiplayer, local_list):
                 p.health = p.health - 1
                 health_bar.hp = health_bar.hp - 1
                 op.alive = False
-        for coin in cs:
-            if collide(p.x, p.y, coin.x, coin.y, p.r, coin.r):
-                coin.alive = False
-                coins += 1
                 
-        
-
         if p.alive == False:
             if multiplayer:
                 game_over_state = True
@@ -356,8 +357,10 @@ def game(n, multiplayer, local_list):
             for b in bullets2:
                 b.update()
         #Update coin (REMAKE)
-        for coin in cs:
-            coin.update()
+                
+        if not multiplayer:
+            for coin in cs:
+                coin.update()
 
         #Check if opponent and bullets collide
         for opponent in ops:
@@ -373,16 +376,12 @@ def game(n, multiplayer, local_list):
         text = font.render(f"Highscore: {highscore}", True, (255,255,255))
         screen.blit(text, (10, 10))
 
-        #Check if oppent and coins collide (REMAKE)
-
         #Update bullets if collided  
         new_bullets = []
         for b in bullets:
             if b.alive:
                 new_bullets.append(b)
         bullets = new_bullets
-
-
 
         #Update opponents if collided
         new_opponents = []
@@ -392,32 +391,32 @@ def game(n, multiplayer, local_list):
         ops = new_opponents
 
         #Update coins if collided
-        new_coins = []
-        for coin in cs:
-            if coin.alive:
-                new_coins.append(coin)
-        cs = new_coins
+        if not multiplayer:
+            new_coins = []
+            for coin in cs:
+                if coin.alive:
+                    new_coins.append(coin)
+            cs = new_coins
         
-        
-
-
         #draw ops, bullets and coins
-        p.draw(screen)
+        #p.draw(screen)
         screen.blit(pic_player, (p.x-p.r, p.y-p.r))
 
         if multiplayer:
-            p2.draw(screen)
+            #p2.draw(screen)
             screen.blit(pic_player, (p2.x-p2.r, p2.y-p2.r))
         for o in ops: 
-            o.draw(screen)
+            #o.draw(screen)
             screen.blit(pic_op, (o.x-o.r, o.y-o.r))
         for b in bullets:
             b.draw(screen)
         if multiplayer:
             for b in bullets2:
                 b.draw(screen)
-        for c in cs:
-            c.draw(screen)
+        if not multiplayer:
+            for c in cs:
+                #c.draw(screen)
+                screen.blit(pic_coin, (c.x-c.r, c.y-c.r))
 
 
         

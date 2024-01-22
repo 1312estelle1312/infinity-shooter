@@ -10,7 +10,7 @@ from opponent import Opponent
 import sys
 import copy
 
-server = "SERVERIP"
+server = "YOURIP"
 port = 5555
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
