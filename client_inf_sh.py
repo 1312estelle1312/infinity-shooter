@@ -10,6 +10,8 @@ from opponent import Opponent
 from player import Player
 from bullet import Bullet
 from network import Network
+from coin import Coin
+from healthbar import Healthbar
 
 # pygame setup
 pygame.init()
@@ -58,9 +60,6 @@ def collide_border_player(player, cl):
                         direction = "right" 
                 #print(f"t:{touched}, d:{direction}, i:{i}, bord:{cl[border].h}")
     return touched, direction
-
-def changed(l, l_old):
-    pass
     
 def menu():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -93,7 +92,6 @@ def menu():
         draw_text('SINGLEPLAYER', font, (255,255,255), screen, WIDTH/2-85, HEIGHT/2-50+15)
         draw_text('MULTIPLAYER', font, (255,255,255), screen, WIDTH/2-85, HEIGHT/2+50+15)
 
-
         click = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -106,7 +104,6 @@ def menu():
                     click = True
  
         pygame.display.update()
-
 
 def main_menu():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -187,6 +184,9 @@ def game(n, multiplayer, local_list):
     world_1 = World(WIDTH, HEIGHT, screen)
     height_border = 100
     highscore = 0
+    coins = 0
+    health_bar = Healthbar(WIDTH-200,10, 180, 30, 3)
+
 
     if multiplayer:
         p = local_list[0]
@@ -201,6 +201,7 @@ def game(n, multiplayer, local_list):
         p = Player(100, constants.HEIGHT/2, 4, 4, 30, "blue", -2, False)
         bullets = []
         ops = []
+        cs = []
         for _ in range(4):
             x = random.randint(426, 853)
             y = random.randint (240, 480)
@@ -208,8 +209,12 @@ def game(n, multiplayer, local_list):
             vy = random.uniform(-0.5, 0)
             opponent = Opponent(x,y,vx,vy)
             ops.append(opponent)
-       
-
+        for _ in range(3):
+            x = random.randint(853, WIDTH - 30)
+            y = random.randint (200, 520)
+            vx = world_1.v
+            coin = Coin(x,y,vx)
+            cs.append(coin)
 
     #generate initial borders
     for i in range(constants.WIDTH):
@@ -326,8 +331,14 @@ def game(n, multiplayer, local_list):
         for op in ops:
             if collide(op.x, op.y, p.x, p.y, op.r, p.r):
                 p.health = p.health - 1
+                health_bar.hp = health_bar.hp - 1
                 op.alive = False
-
+        for coin in cs:
+            if collide(p.x, p.y, coin.x, coin.y, p.r, coin.r):
+                coin.alive = False
+                coins += 1
+                
+        
 
         if p.alive == False:
             if multiplayer:
@@ -344,6 +355,9 @@ def game(n, multiplayer, local_list):
         if multiplayer:
             for b in bullets2:
                 b.update()
+        #Update coin (REMAKE)
+        for coin in cs:
+            coin.update()
 
         #Check if opponent and bullets collide
         for opponent in ops:
@@ -351,12 +365,15 @@ def game(n, multiplayer, local_list):
                 if collide(opponent.x, opponent.y, bullet.x, bullet.y, opponent.r, bullet.r):
                     opponent.alive = False
                     bullet.alive = False
+                    highscore += 1
+                                  
                     highscore += 1          
             
         #highscore
         text = font.render(f"Highscore: {highscore}", True, (255,255,255))
         screen.blit(text, (10, 10))
 
+        #Check if oppent and coins collide (REMAKE)
 
         #Update bullets if collided  
         new_bullets = []
@@ -374,6 +391,16 @@ def game(n, multiplayer, local_list):
                 new_opponents.append(opponent)
         ops = new_opponents
 
+        #Update coins if collided
+        new_coins = []
+        for coin in cs:
+            if coin.alive:
+                new_coins.append(coin)
+        cs = new_coins
+        
+        
+
+
         #draw ops, bullets and coins
         p.draw(screen)
         screen.blit(pic_player, (p.x-p.r, p.y-p.r))
@@ -389,7 +416,12 @@ def game(n, multiplayer, local_list):
         if multiplayer:
             for b in bullets2:
                 b.draw(screen)
+        for c in cs:
+            c.draw(screen)
 
+
+        
+        
 
         #"scroll" the old screen 
         new_current_elements = []
@@ -415,7 +447,14 @@ def game(n, multiplayer, local_list):
         #highscore
         text = font.render(f"score: {highscore}", True, (255,255,255))
         screen.blit(text, (10, 10))
+
+        #Coins
+        text = font.render(f"Coins: {coins}", True, (255, 255, 255))
+        screen.blit(text, (10, HEIGHT - 35))
+        health_bar.draw(screen)
         world_1.update()
+
+        
 
         # flip() the display to put your work on screen
         pygame.display.flip()
