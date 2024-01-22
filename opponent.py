@@ -1,4 +1,5 @@
 import pygame 
+import constants
 
 class Opponent:
     def __init__(self,x,y,vx,vy):
@@ -15,3 +16,5 @@ class Opponent:
     def update(self):
         self.x = self.x + self.vx
         self.y = self.y + self.vy
+        if self.x < 0:
+            self.alive = False

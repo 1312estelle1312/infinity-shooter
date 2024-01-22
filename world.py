@@ -32,9 +32,8 @@ class World:
 
 
     def update(self):
-        #"scroll" the default screen
         self.s += self.v
-        #self.default(self.s)
+
 
 
 

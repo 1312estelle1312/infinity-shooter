@@ -8,9 +8,9 @@ from bullet import Bullet
 import random
 from opponent import Opponent
 import sys
+import copy
 
-#ip = input("IP Addresse: ")
-server = "192.168.1.252"
+server = "SERVERIP"
 port = 5555
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -32,7 +32,7 @@ list_bullets = [[], []]
 
 #Liste für Gegner
 ops1 = []
-for _ in range(10):
+for _ in range(4):
     x = random.randint(426, 853)
     y = random.randint (240, 480)
     vx = random.randint (-1, 0)
@@ -45,8 +45,11 @@ ops = [ops1, ops2]
 
 connected = [False, False]
 
+world_s = [0, 0]
+
+
 def threaded_client(conn, player_id):
-    conn.send(pickle.dumps([players[player_id], list_bullets[player_id], ops[0], ops[1], game_over_state[0]]))
+    conn.send(pickle.dumps([players[player_id], list_bullets[player_id], ops[player_id], game_over_state[0], world_s[player_id]]))
     reply = ""
     running1 = True
     running2 = False
@@ -61,7 +64,6 @@ def threaded_client(conn, player_id):
             else:
                 if player_id == 0:
                     reply = ready_state[1]
-                    #print(reply)
                 else:
                     reply = ready_state[0]
 
@@ -84,29 +86,30 @@ def threaded_client(conn, player_id):
     while running2:
         try:
             try:
-                data_list = pickle.loads(conn.recv(2048))
-            #print(data_list)
+                data_list = pickle.loads(conn.recv(4096))
             except Exception as e:
                 break
 
             players[player_id] = data_list[0]
             list_bullets[player_id] = data_list[1]
             ops[player_id] = data_list[2]
+            world_s[player_id] = data_list[4]
 
             if data_list[3]:
                 game_over_state[0] = True
 
             if not data_list[:]:
                 print("Disconnected")
-                break
+                break 
+
             else:
                 if player_id == 0:
-                    reply = [players[1], list_bullets[1], ops[0], ops[1], game_over_state]
-                else:
-                    reply = [players[0], list_bullets[0], ops[0], ops[1], game_over_state]
 
-            #print(f"Received from {player_id}: {data_list}")
-            #print(f"Sending to {player_id}:  {reply}")
+                    reply = [players[1], list_bullets[1], ops[1], game_over_state, world_s[1]]
+                else:
+
+                    reply = [players[0], list_bullets[0], ops[0], game_over_state, world_s[0]]
+            
 
             conn.sendall(pickle.dumps(reply))
         except:
@@ -136,18 +139,15 @@ while running:
         connected[currentPlayer] = True
         currentPlayer += 1
     except socket.timeout:
-        #print(connected)
         if not connected[0] and not connected[1]:
-            #print("Server bereit zum verbinden")
             currentPlayer = 0
             ready_state = {0: "not_ready", 1: "not_ready"}
             game_over_state = [False]
             players = [Player(100, constants.HEIGHT/2, 4, 4, 30, "blue", -2, False), Player(100, constants.HEIGHT/2, 4, 4, 30, (118, 31, 184), -2, True)]
             list_bullets = [[], []]
 
-            #Liste für Gegner
             ops1 = []
-            for _ in range(10):
+            for _ in range(4):
                 x = random.randint(426, 853)
                 y = random.randint (240, 480)
                 vx = random.randint (-1, 0)
@@ -157,6 +157,9 @@ while running:
             ops2 = ops1[:]
 
             ops = [ops1, ops2]
+
+            world_s = [0, 0]
+            number_length = 0.5
 
 
 

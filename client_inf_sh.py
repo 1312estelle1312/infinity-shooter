@@ -22,6 +22,12 @@ font = pygame.font.SysFont(None, 40)
 bg = pygame.image.load("static/bg.jpg")
 bg = pygame.transform.scale(bg, ((WIDTH, HEIGHT)))
 
+pic_player = pygame.image.load("static/picp.png")
+pic_player = pygame.transform.scale(pic_player, ((60, 60)))
+
+pic_op = pygame.image.load("static/tiger.png")
+pic_op = pygame.transform.scale(pic_op, ((60, 60)))
+
 def draw_text(text, font, color, surface, x, y):
     textobj = font.render(text, 1, color)
     textrect = textobj.get_rect()
@@ -52,6 +58,9 @@ def collide_border_player(player, cl):
                         direction = "right" 
                 #print(f"t:{touched}, d:{direction}, i:{i}, bord:{cl[border].h}")
     return touched, direction
+
+def changed(l, l_old):
+    pass
     
 def menu():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -168,6 +177,7 @@ def game_over_screen():
         screen.blit(quit_button, (constants.WIDTH/2 - quit_button.get_width()/2, constants.HEIGHT/2 + quit_button.get_height()/2))
         pygame.display.update()
 
+
 def game(n, multiplayer, local_list):
     #initial settings
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -182,20 +192,23 @@ def game(n, multiplayer, local_list):
         p = local_list[0]
         bullets = local_list[1]
         ops = local_list[2]
+        game_over_state = local_list[3]
+        #worlds
 
+    number_length = 0.5
 
     if not multiplayer:
         p = Player(100, constants.HEIGHT/2, 4, 4, 30, "blue", -2, False)
         bullets = []
         ops = []
-        for _ in range(10):
+        for _ in range(4):
             x = random.randint(426, 853)
             y = random.randint (240, 480)
             vx = random.randint (-1, 0)
-            vy = random.randint (-1, 0)
-            opponent = Opponent(x,y,vy,vx)
+            vy = random.uniform(-0.5, 0)
+            opponent = Opponent(x,y,vx,vy)
             ops.append(opponent)
-
+       
 
 
     #generate initial borders
@@ -212,6 +225,10 @@ def game(n, multiplayer, local_list):
         current_elements.append(new_border)
 
     game_over_state = False
+
+    ops_new = []
+
+    ops2_old = []
 
     running = True
     while running:
@@ -232,28 +249,67 @@ def game(n, multiplayer, local_list):
 
         #Network player and bullets
         if multiplayer:
-            local_list = [p, bullets, ops, game_over_state]
+            local_list = [p, bullets, ops, game_over_state, world_1.s]
             remote_list = n.send_and_get(local_list)
 
-            if remote_list[4][0]:
+            if remote_list[3][0]:
                 running = False
                 n.disconnect()
                 game_over_screen()
                 continue
 
-            
+            ops2_old = ops[:]
+
             p2 = remote_list[0]
             bullets2 = remote_list[1]
-            ops0 = remote_list[2]
-            ops1 = remote_list[3]
+            ops2 = remote_list[2]
+            world2s = remote_list[4]
 
-            #Choose the right enemy list
-            if len(ops0) < len(ops1):
-                ops = ops0
-            elif len(ops1) < len(ops0):
-                ops = ops1
-            else:
-                ops = ops0
+            #syn world shifts
+            world_1.s = world2s
+
+            #synchronize ops
+            if len(ops2) < len(ops):
+                ops = ops2[:]
+
+            print(world_1.s*-1, WIDTH*number_length)
+            ops_new = []
+            if world_1.s*-1 <= WIDTH*number_length+10 and world_1.s*-1 >= WIDTH*number_length-10:
+                for _ in range(6):
+                    x = random.randint(1000, 1150)
+                    y = random.randint (240, 480)
+                    vx = random.uniform (-1*((world_1.s*-1/WIDTH)*9), 0)
+                    vy = random.uniform (-0.5, 0)
+                    opponent = Opponent(x,y,vx,vy)
+                    ops_new.append(opponent)  
+                if number_length >= 2:
+                    for _ in range(3):
+                        x = random.randint(0, 150)
+                        y = random.randint (240, 480)
+                        vx = random.uniform (1*((world_1.s*-1/WIDTH)*2), 0)
+                        vy = random.uniform (-6, 0)
+                        opponent = Opponent(x,y,vx,vy)
+                        ops_new.append(opponent) 
+                number_length = number_length + 0.5 
+
+        if not multiplayer:
+            if world_1.s*-1 == WIDTH*number_length:
+                for _ in range(6):
+                    x = random.randint(1000, 1150)
+                    y = random.randint (240, 480)
+                    vx = random.uniform (-1*((world_1.s*-1/WIDTH)*9), 0)
+                    vy = random.uniform (-0.5, 0)
+                    opponent = Opponent(x,y,vx,vy)
+                    ops.append(opponent)  
+                if number_length >= 2:
+                    for _ in range(3):
+                        x = random.randint(0, 150)
+                        y = random.randint (240, 480)
+                        vx = random.uniform (1*((world_1.s*-1/WIDTH)*2), 0)
+                        vy = random.uniform (-6, 0)
+                        opponent = Opponent(x,y,vx,vy)
+                        ops.append(opponent) 
+                number_length = number_length + 0.5 
 
 
         #Check if player touched border and update
@@ -295,17 +351,12 @@ def game(n, multiplayer, local_list):
                 if collide(opponent.x, opponent.y, bullet.x, bullet.y, opponent.r, bullet.r):
                     opponent.alive = False
                     bullet.alive = False
-                    highscore += 1
-                    print ("Highscore", highscore)          
+                    highscore += 1          
             
         #highscore
         text = font.render(f"Highscore: {highscore}", True, (255,255,255))
         screen.blit(text, (10, 10))
 
-        #Check if oppent and coins collide (REMAKE)
-        for coin in coins:
-            if collide(coin.x, coin.y, bullet.x, bullet.y, bullet.r, coin.r):
-                coin.alive = False
 
         #Update bullets if collided  
         new_bullets = []
@@ -322,24 +373,23 @@ def game(n, multiplayer, local_list):
             if opponent.alive:
                 new_opponents.append(opponent)
         ops = new_opponents
-        
-        #Update coin (REMAKE)
-        c.update() 
-
 
         #draw ops, bullets and coins
         p.draw(screen)
+        screen.blit(pic_player, (p.x-p.r, p.y-p.r))
+
         if multiplayer:
             p2.draw(screen)
+            screen.blit(pic_player, (p2.x-p2.r, p2.y-p2.r))
         for o in ops: 
             o.draw(screen)
+            screen.blit(pic_op, (o.x-o.r, o.y-o.r))
         for b in bullets:
             b.draw(screen)
         if multiplayer:
             for b in bullets2:
                 b.draw(screen)
-        for c in coins:
-            c.draw(screen)
+
 
         #"scroll" the old screen 
         new_current_elements = []
@@ -361,6 +411,7 @@ def game(n, multiplayer, local_list):
         new_border.draw()
 
         current_elements.append(new_border)
+        
         #highscore
         text = font.render(f"score: {highscore}", True, (255,255,255))
         screen.blit(text, (10, 10))
